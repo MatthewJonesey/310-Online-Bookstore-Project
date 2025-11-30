@@ -2,7 +2,7 @@ import java.sql.*;
 
 public class Application {
 
-    private static Application instance;   // Singleton pattern
+    private static Application instance;
 
     public static Application getInstance() {
         if (instance == null) {
@@ -10,7 +10,6 @@ public class Application {
         }
         return instance;
     }
-    // Main components of this application
 
     private Connection connection;
 
@@ -18,35 +17,37 @@ public class Application {
         return connection;
     }
 
-
     private Application() {
-        // Connect to my sql data base changed from slqlite database
+        // Connect to MySQL database
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            String url = "jdbc:mysql://localhost:3306/hw4?useSSL=false&serverTimezone=UTC";
+            // Update database name from hw4 to book_store
+            String url = "jdbc:mysql://localhost:3306/book_store?useSSL=false&serverTimezone=UTC";
             String user = "root";       
-            String password = "pass"; // Implement password through .env file 
-            connection = DriverManager.getConnection(url,user,password);
+            String password = "pass"; // TODO: Implement password through .env file 
+            connection = DriverManager.getConnection(url, user, password);
 
-        }
-        catch (ClassNotFoundException ex) {
-            System.out.println("MySQL is not installed. System exits with error!");
+            System.out.println("Successfully connected to the database.");
+
+        } catch (ClassNotFoundException ex) {
+            System.out.println("MySQL driver is not installed. System exits with error!");
             ex.printStackTrace();
             System.exit(1);
-        }
-
-        catch (SQLException ex) {
-            System.out.println("MySQL database is not ready. System exits with error!" + ex.getMessage());
-
+        } catch (SQLException ex) {
+            System.out.println("MySQL database is not ready. System exits with error: " + ex.getMessage());
+            ex.printStackTrace();
             System.exit(2);
         }
-
     }
 
-
     public static void main(String[] args) {
-        // TODO Implement Login screen
-        //Application.getInstance().getLoginScreen().setVisible(true);
+        // Initialize the application and database connection
+        Application.getInstance();
+        
+        // Start the login screen
+        java.awt.EventQueue.invokeLater(() -> {
+            new LoginScreen().setVisible(true);
+        });
     }
 }
