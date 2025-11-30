@@ -26,7 +26,7 @@ public class Application {
 
             String url = "jdbc:mysql://localhost:3306/hw4?useSSL=false&serverTimezone=UTC";
             String user = "root";       
-            String password = "Jones5960495"; 
+            String password = "pass"; // Implement password through .env file 
             connection = DriverManager.getConnection(url,user,password);
 
         }
