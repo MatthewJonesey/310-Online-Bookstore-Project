@@ -1,3 +1,10 @@
+Compiling: javac -d bin -cp "lib/*" src/*.java
+Running: 
+first run python with the > button
+Java: java -cp "bin;lib/*" Application
+
+
+
 Product Requirements Document: Online
 
 Bookstore with Desktop Application
