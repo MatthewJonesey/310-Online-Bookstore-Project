@@ -98,10 +98,7 @@ public class CartScreen extends JFrame {
             int orderId = controller.createOrder(cart);
             
             if (orderId > 0) {
-                // Send email notification
-                Order order = controller.getOrderDetails(orderId);
-                EmailService.sendOrderConfirmation(order);
-                
+                // Email is sent automatically by Flask backend
                 JOptionPane.showMessageDialog(this,
                     "Order placed successfully!\nOrder ID: " + orderId + 
                     "\nA confirmation email has been sent to your registered email.",

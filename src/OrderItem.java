@@ -1,4 +1,4 @@
-class OrderItem {
+public class OrderItem {
     private int orderItemId;
     private int bookId;
     private String bookTitle;

@@ -1,54 +1,85 @@
-import java.sql.*;
-import org.mindrot.jbcrypt.BCrypt;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
 
 public class LoginController {
+    private final APIClient apiClient;
+    private final Gson gson;
     
-    public User login(String username, String password) {
-        Connection conn = Application.getInstance().getDBConnection();
-        String query = "SELECT user_id, username, email, password_hash, role FROM users WHERE username = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, username);
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                String storedHash = rs.getString("password_hash");
-                
-                // Verify password using BCrypt
-                if (BCrypt.checkpw(password, storedHash)) {
-                    User user = new User();
-                    user.setUserId(rs.getInt("user_id"));
-                    user.setUsername(rs.getString("username"));
-                    user.setEmail(rs.getString("email"));
-                    user.setRole(rs.getString("role"));
-                    return user;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
+    public LoginController() {
+        this.apiClient = APIClient.getInstance();
+        this.gson = new Gson();
     }
     
+    /**
+     * Login user via REST API
+     */
+    public User login(String username, String password) {
+        try {
+            // Create request JSON
+            JsonObject requestBody = new JsonObject();
+            requestBody.addProperty("username", username);
+            requestBody.addProperty("password", password);
+            
+            // Make API call
+            String response = apiClient.post("/auth/login", gson.toJson(requestBody));
+            
+            // Parse response
+            JsonObject jsonResponse = gson.fromJson(response, JsonObject.class);
+            
+            // Store auth token
+            String token = jsonResponse.get("token").getAsString();
+            apiClient.setAuthToken(token);
+            
+            // Extract user data
+            JsonObject userJson = jsonResponse.getAsJsonObject("user");
+            
+            User user = new User();
+            user.setUserId(userJson.get("user_id").getAsInt());
+            user.setUsername(userJson.get("username").getAsString());
+            user.setEmail(userJson.get("email").getAsString());
+            user.setRole(userJson.get("role").getAsString());
+            
+            return user;
+            
+        } catch (IOException e) {
+            System.err.println("Login failed: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Register new user via REST API
+     */
     public boolean register(String username, String email, String password) {
-        Connection conn = Application.getInstance().getDBConnection();
-        String query = "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            // Hash the password using BCrypt
-            String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
+        try {
+            // Create request JSON
+            JsonObject requestBody = new JsonObject();
+            requestBody.addProperty("username", username);
+            requestBody.addProperty("email", email);
+            requestBody.addProperty("password", password);
             
-            stmt.setString(1, username);
-            stmt.setString(2, email);
-            stmt.setString(3, hashedPassword);
+            // Make API call
+            apiClient.post("/auth/register", gson.toJson(requestBody));
             
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
+            return true;
             
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("Registration failed: " + e.getMessage());
             return false;
+        }
+    }
+    
+    /**
+     * Logout user
+     */
+    public void logout() {
+        try {
+            apiClient.post("/auth/logout", null);
+        } catch (IOException e) {
+            System.err.println("Logout error: " + e.getMessage());
+        } finally {
+            apiClient.clearAuthToken();
         }
     }
 }
