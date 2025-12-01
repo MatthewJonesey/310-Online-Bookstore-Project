@@ -7,8 +7,10 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+from dotenv import load_dotenv
 import os
 
+load_dotenv()  # Load environment variables from .env file
 app = Flask(__name__)
 CORS(app)  # Enable CORS for desktop client
 
@@ -17,14 +19,14 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'book_store',
     'user': 'root',
-    'password': 'pass'
+    'password': os.getenv('DB_PASSWORD')
 }
 
 # Email configuration
 SMTP_HOST = 'smtp.gmail.com'
 SMTP_PORT = 587
-SENDER_EMAIL = 'your-email@gmail.com'
-SENDER_PASSWORD = 'your-app-password'
+SENDER_EMAIL = os.getenv('EMAIL_USER')
+SENDER_PASSWORD = os.getenv('APP_PASSWORD')
 
 # Active sessions (in production, use Redis or similar)
 sessions = {}
