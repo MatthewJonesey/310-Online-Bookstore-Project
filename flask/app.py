@@ -407,17 +407,47 @@ def get_orders():
         
         if user['role'] == 'manager':
             query = """SELECT o.order_id, o.user_id, u.username, o.payment_status, 
-                      o.total_amount, o.created_at
+                      o.total_amount, DATE_FORMAT(o.created_at, '%Y-%m-%d %H:%i:%s') as created_at
                       FROM orders o JOIN users u ON o.user_id = u.user_id
                       ORDER BY o.created_at DESC"""
             cursor.execute(query)
         else:
-            query = """SELECT order_id, user_id, payment_status, total_amount, created_at
+            query = """SELECT order_id, user_id, payment_status, total_amount, 
+                      DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at
                       FROM orders WHERE user_id = %s ORDER BY created_at DESC"""
             cursor.execute(query, (user['user_id'],))
         
         orders = cursor.fetchall()
         return jsonify({'orders': orders}), 200
+        
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/orders/<int:order_id>/items', methods=['GET'])
+def get_order_items(order_id):
+    """Get items for a specific order (manager only)"""
+    token = request.headers.get('Authorization')
+    if not token or token not in sessions:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    if sessions[token]['role'] != 'manager':
+        return jsonify({'error': 'Forbidden'}), 403
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """SELECT oi.order_item_id, oi.book_id, b.title, b.author, 
+                  oi.item_type, oi.price
+                  FROM order_items oi
+                  JOIN books b ON oi.book_id = b.book_id
+                  WHERE oi.order_id = %s"""
+        cursor.execute(query, (order_id,))
+        items = cursor.fetchall()
+        return jsonify({'items': items}), 200
         
     finally:
         cursor.close()

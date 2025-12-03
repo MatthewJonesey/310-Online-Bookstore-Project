@@ -12,6 +12,7 @@ public class ManagerScreen extends JFrame {
     private JTable ordersTable;
     private DefaultTableModel ordersTableModel;
     private JButton refreshOrdersButton;
+    private JButton viewOrderDetailsButton;
     private JButton updatePaymentButton;
     
     // Books tab components
@@ -70,6 +71,7 @@ public class ManagerScreen extends JFrame {
         // Action listeners
         logoutButton.addActionListener(e -> logout());
         refreshOrdersButton.addActionListener(e -> loadOrders());
+        viewOrderDetailsButton.addActionListener(e -> viewOrderDetails());
         updatePaymentButton.addActionListener(e -> updatePaymentStatus());
         refreshBooksButton.addActionListener(e -> loadBooks());
         addBookButton.addActionListener(e -> openAddBookDialog());
@@ -91,6 +93,17 @@ public class ManagerScreen extends JFrame {
         };
         ordersTable = new JTable(ordersTableModel);
         ordersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        // Add double-click listener to view order details
+        ordersTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    viewOrderDetails();
+                }
+            }
+        });
+        
         JScrollPane scrollPane = new JScrollPane(ordersTable);
         panel.add(scrollPane, BorderLayout.CENTER);
 
@@ -99,9 +112,11 @@ public class ManagerScreen extends JFrame {
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
         
         refreshOrdersButton = new JButton("Refresh Orders");
+        viewOrderDetailsButton = new JButton("View Order Details");
         updatePaymentButton = new JButton("Update Payment Status");
         
         buttonPanel.add(refreshOrdersButton);
+        buttonPanel.add(viewOrderDetailsButton);
         buttonPanel.add(updatePaymentButton);
         
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -159,6 +174,96 @@ public class ManagerScreen extends JFrame {
             };
             ordersTableModel.addRow(row);
         }
+    }
+
+    private void viewOrderDetails() {
+        int selectedRow = ordersTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this,
+                "Please select an order to view details.",
+                "No Selection",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int orderId = (int) ordersTableModel.getValueAt(selectedRow, 0);
+        int userId = (int) ordersTableModel.getValueAt(selectedRow, 1);
+        String username = (String) ordersTableModel.getValueAt(selectedRow, 2);
+        String totalAmount = (String) ordersTableModel.getValueAt(selectedRow, 3);
+        String paymentStatus = (String) ordersTableModel.getValueAt(selectedRow, 4);
+        Object orderDate = ordersTableModel.getValueAt(selectedRow, 5);
+
+        // Get order items
+        List<OrderItem> items = controller.getOrderItems(orderId);
+
+        // Create dialog
+        JDialog detailsDialog = new JDialog(this, "Order Details - Order #" + orderId, true);
+        detailsDialog.setSize(700, 500);
+        detailsDialog.setLocationRelativeTo(this);
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Order summary panel
+        JPanel summaryPanel = new JPanel();
+        summaryPanel.setLayout(new GridLayout(5, 2, 10, 5));
+        summaryPanel.setBorder(BorderFactory.createTitledBorder("Order Summary"));
+
+        summaryPanel.add(new JLabel("Order ID:"));
+        summaryPanel.add(new JLabel(String.valueOf(orderId)));
+        summaryPanel.add(new JLabel("Customer:"));
+        summaryPanel.add(new JLabel(username + " (ID: " + userId + ")"));
+        summaryPanel.add(new JLabel("Total Amount:"));
+        summaryPanel.add(new JLabel(totalAmount));
+        summaryPanel.add(new JLabel("Payment Status:"));
+        summaryPanel.add(new JLabel(paymentStatus));
+        summaryPanel.add(new JLabel("Order Date:"));
+        summaryPanel.add(new JLabel(orderDate.toString()));
+
+        mainPanel.add(summaryPanel, BorderLayout.NORTH);
+
+        // Items table
+        JPanel itemsPanel = new JPanel();
+        itemsPanel.setLayout(new BorderLayout());
+        itemsPanel.setBorder(BorderFactory.createTitledBorder("Order Items"));
+
+        String[] columnNames = {"Item ID", "Book Title", "Author", "Type", "Price"};
+        DefaultTableModel itemsTableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (OrderItem item : items) {
+            Object[] row = {
+                item.getOrderItemId(),
+                item.getBookTitle(),
+                item.getBookAuthor(),
+                item.getItemType().substring(0, 1).toUpperCase() + item.getItemType().substring(1),
+                String.format("$%.2f", item.getPrice())
+            };
+            itemsTableModel.addRow(row);
+        }
+
+        JTable itemsTable = new JTable(itemsTableModel);
+        itemsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scrollPane = new JScrollPane(itemsTable);
+        itemsPanel.add(scrollPane, BorderLayout.CENTER);
+
+        mainPanel.add(itemsPanel, BorderLayout.CENTER);
+
+        // Close button
+        JPanel buttonPanel = new JPanel();
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> detailsDialog.dispose());
+        buttonPanel.add(closeButton);
+
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        detailsDialog.add(mainPanel);
+        detailsDialog.setVisible(true);
     }
 
     private void updatePaymentStatus() {

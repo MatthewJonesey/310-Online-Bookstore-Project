@@ -187,4 +187,33 @@ public class ManagerController {
             return false;
         }
     }
+
+    public List<OrderItem> getOrderItems(int orderId) {
+        List<OrderItem> items = new ArrayList<>();
+        
+        try {
+            String response = apiClient.get("/orders/" + orderId + "/items");
+            JsonObject jsonResponse = gson.fromJson(response, JsonObject.class);
+            JsonArray itemsArray = jsonResponse.getAsJsonArray("items");
+            
+            for (JsonElement element : itemsArray) {
+                JsonObject itemJson = element.getAsJsonObject();
+                
+                OrderItem item = new OrderItem();
+                item.setOrderItemId(itemJson.get("order_item_id").getAsInt());
+                item.setBookId(itemJson.get("book_id").getAsInt());
+                item.setBookTitle(itemJson.get("title").getAsString());
+                item.setBookAuthor(itemJson.get("author").getAsString());
+                item.setItemType(itemJson.get("item_type").getAsString());
+                item.setPrice(itemJson.get("price").getAsDouble());
+                
+                items.add(item);
+            }
+            
+        } catch (IOException e) {
+            System.err.println("Get order items failed: " + e.getMessage());
+        }
+        
+        return items;
+    }
 }
