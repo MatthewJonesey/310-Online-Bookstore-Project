@@ -38,7 +38,31 @@ public class ManagerController {
                 
                 // Parse timestamp
                 String createdAtStr = orderJson.get("created_at").getAsString();
-                order.setCreatedAt(Timestamp.valueOf(createdAtStr.replace("T", " ").substring(0, 19)));
+                try {
+                    // Convert ISO format to SQL format: 2024-01-15T14:30:22 -> 2024-01-15 14:30:22
+                    createdAtStr = createdAtStr.replace("T", " ");
+                    // Remove fractional seconds: 2024-01-15 14:30:22.123456 -> 2024-01-15 14:30:22
+                    if (createdAtStr.contains(".")) {
+                        createdAtStr = createdAtStr.substring(0, createdAtStr.indexOf("."));
+                    }
+                    // Remove timezone info: 2024-01-15 14:30:22+00:00 -> 2024-01-15 14:30:22
+                    if (createdAtStr.contains("+")) {
+                        createdAtStr = createdAtStr.substring(0, createdAtStr.indexOf("+"));
+                    }
+                    if (createdAtStr.contains("Z")) {
+                        createdAtStr = createdAtStr.substring(0, createdAtStr.indexOf("Z"));
+                    }
+                    // Trim to exact format
+                    createdAtStr = createdAtStr.trim();
+                    if (createdAtStr.length() > 19) {
+                        createdAtStr = createdAtStr.substring(0, 19);
+                    }
+                    order.setCreatedAt(Timestamp.valueOf(createdAtStr));
+                } catch (Exception e) {
+                    // If parsing fails, use current timestamp
+                    System.err.println("Warning: Could not parse timestamp '" + createdAtStr + "', using current time");
+                    order.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                }
                 
                 orders.add(order);
             }
