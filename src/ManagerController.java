@@ -39,13 +39,10 @@ public class ManagerController {
                 // Parse timestamp
                 String createdAtStr = orderJson.get("created_at").getAsString();
                 try {
-                    // Convert ISO format to SQL format: 2024-01-15T14:30:22 -> 2024-01-15 14:30:22
                     createdAtStr = createdAtStr.replace("T", " ");
-                    // Remove fractional seconds: 2024-01-15 14:30:22.123456 -> 2024-01-15 14:30:22
                     if (createdAtStr.contains(".")) {
                         createdAtStr = createdAtStr.substring(0, createdAtStr.indexOf("."));
                     }
-                    // Remove timezone info: 2024-01-15 14:30:22+00:00 -> 2024-01-15 14:30:22
                     if (createdAtStr.contains("+")) {
                         createdAtStr = createdAtStr.substring(0, createdAtStr.indexOf("+"));
                     }

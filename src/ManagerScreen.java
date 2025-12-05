@@ -94,7 +94,6 @@ public class ManagerScreen extends JFrame {
         ordersTable = new JTable(ordersTableModel);
         ordersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
-        // Add double-click listener to view order details
         ordersTable.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {

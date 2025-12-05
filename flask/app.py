@@ -28,7 +28,7 @@ SMTP_PORT = 587
 SENDER_EMAIL = os.getenv('EMAIL_USER')
 SENDER_PASSWORD = os.getenv('APP_PASSWORD')
 
-# Active sessions (in production, use Redis or similar)
+# Active sessions
 sessions = {}
 
 def get_db_connection():

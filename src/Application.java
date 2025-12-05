@@ -9,7 +9,6 @@ public class Application {
     }
 
     private Application() {
-        // No database connection - Flask API handles all database operations
         System.out.println("Application initialized - using REST API backend at http://localhost:5000");
     }
 
